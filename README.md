@@ -1,6 +1,6 @@
 ## Deployed Site
 
-https://rocket-frontend.vercel.app/
+[https://rocket-frontend.vercel.app/](https://rocket-eth.vercel.app/)
 
 ## Getting Started
 
