@@ -47,7 +47,7 @@ function Home() {
 
         <Text p={4}>Connect your Ethereum wallet and go to the moon!</Text>
 
-        <Button onClick={rocket}>To the moon!</Button>
+        <Button onClick={null}>To the moon!</Button>
       </Flex>
     </Container>
   );
