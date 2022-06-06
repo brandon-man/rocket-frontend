@@ -1,5 +1,10 @@
 import Home from "../src/components/Home";
+import NavContainer from "../src/components/Nav/NavContainer.js";
 
 export default function App() {
-  return <Home />;
+  return (
+    <NavContainer>
+      <Home />
+    </NavContainer>
+  );
 }

@@ -3,8 +3,10 @@ import {
   Container,
   Flex,
   Heading,
+  Spinner,
   Stack,
   Text,
+  useColorMode,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
@@ -16,6 +18,8 @@ function Home() {
    */
   const [currentAccount, setCurrentAccount] = useState("");
   const [rocketCount, setRocketCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const { colorMode, toggleColorMode } = useColorMode();
 
   const contractAddress = "0xf506d4F412a83a3d1c65DF415b76811264F4F7Bd";
 
@@ -90,6 +94,7 @@ function Home() {
 
         const rocketTxn = await rocketPortalContract.rocket();
         console.log("Mining...", rocketTxn.hash);
+        setLoading(true);
 
         await rocketTxn.wait();
         console.log("Mining --", rocketTxn.hash);
@@ -97,6 +102,7 @@ function Home() {
         count = await rocketPortalContract.getTotalRockets();
         console.log("Retrieved total rocket count...", count.toNumber());
         setRocketCount(rocketCount + count.toNumber());
+        setLoading(false);
       } else {
         console.log("Ethereum object doesn't exist!");
       }
@@ -142,11 +148,33 @@ function Home() {
       <Flex alignItems="center" flexDirection="column" m={4}>
         <Heading p={4}>🚀 Hey there!</Heading>
         <Text p={4}>Connect your Ethereum wallet and go to the moon!</Text>
-        <Text p={4}>Number of rockets: {rocketCount}</Text>
+
         <Stack spacing={4} direction="column" align="center">
-          <Button onClick={rocket}>To the moon! 🚀</Button>
-          {!currentAccount && (
-            <Button onClick={connectWallet}>Connect Wallet</Button>
+          {loading ? (
+            <Spinner
+              thickness="4px"
+              speed="0.65s"
+              emptyColor="gray.200"
+              color="blue.500"
+              size="xl"
+            />
+          ) : (
+            <Button
+              colorScheme={colorMode === "dark" ? "orange" : "blue"}
+              onClick={rocket}
+            >
+              To the moon! 🚀
+            </Button>
+          )}
+          {!currentAccount ? (
+            <Button
+              colorScheme={colorMode === "dark" ? "orange" : "pink.500"}
+              onClick={connectWallet}
+            >
+              Connect Wallet
+            </Button>
+          ) : (
+            <Text p={4}>Number of rockets: {rocketCount}</Text>
           )}
         </Stack>
       </Flex>
