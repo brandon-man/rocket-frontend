@@ -168,7 +168,7 @@ function Home() {
           )}
           {!currentAccount ? (
             <Button
-              colorScheme={colorMode === "dark" ? "orange" : "pink.500"}
+              colorScheme={colorMode === "dark" ? "orange" : "blue"}
               onClick={connectWallet}
             >
               Connect Wallet
