@@ -43,38 +43,9 @@ function Home() {
   const [loading, setLoading] = useState(false);
   const { colorMode, toggleColorMode } = useColorMode();
 
-  const contractAddress = "0xa4CC42728a48710524B454F719fD5483bE2DBe8f";
+  const contractAddress = "0xD2C1b021C8dd24f49E83B59c5e16e3D7B629F7eF";
 
   const contractABI = abi.abi;
-
-  const checkIfWalletIsConnected = async () => {
-    try {
-      const { ethereum } = window;
-
-      if (!ethereum) {
-        console.log("Make sure you have Metamask!");
-        return;
-      } else {
-        console.log("We have the ethereum object", ethereum);
-      }
-
-      /*
-       * Check if we're authorized to access the user's wallet
-       */
-      const accounts = await ethereum.request({ method: "eth_accounts" });
-
-      if (accounts.length !== 0) {
-        const account = accounts[0];
-        console.log("Found an authorized account:", account);
-        setCurrentAccount(account);
-        getAllRockets();
-      } else {
-        console.log("No authorized account found");
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
   /**
    * Implement your connectWallet method here
@@ -99,6 +70,38 @@ function Home() {
     }
   };
 
+  const getAllRockets = async () => {
+    const { ethereum } = window;
+    try {
+      if (ethereum) {
+        const provider = new ethers.providers.Web3Provider(ethereum);
+        const signer = provider.getSigner();
+        const rocketPortalContract = new ethers.Contract(
+          contractAddress,
+          contractABI,
+          signer
+        );
+
+        const rockets = await rocketPortalContract.getAllRockets();
+
+        let rocketsCleaned = [];
+        rockets.forEach((rocket) => {
+          rocketsCleaned.push({
+            address: rocket.rocketer,
+            timestamp: new Date(rocket.timestamp * 1000),
+            message: rocket.message,
+          });
+        });
+
+        setAllRockets(rocketsCleaned);
+      } else {
+        console.log("Ethereum object doesn't exist!");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const rocket = async () => {
     try {
       const { ethereum } = window;
@@ -115,7 +118,9 @@ function Home() {
         let count = await rocketPortalContract.getTotalRockets();
         console.log("Retrieved total rocket count...", count.toNumber());
 
-        const rocketTxn = await rocketPortalContract.rocket(value);
+        const rocketTxn = await rocketPortalContract.rocket(value, {
+          gasLimit: 300000,
+        });
         console.log("Mining...", rocketTxn.hash);
         setLoading(true);
 
@@ -159,6 +164,35 @@ function Home() {
   };
 
   useEffect(() => {
+    const checkIfWalletIsConnected = async () => {
+      try {
+        const { ethereum } = window;
+
+        if (!ethereum) {
+          console.log("Make sure you have Metamask!");
+          return;
+        } else {
+          console.log("We have the ethereum object", ethereum);
+        }
+
+        /*
+         * Check if we're authorized to access the user's wallet
+         */
+        const accounts = await ethereum.request({ method: "eth_accounts" });
+
+        if (accounts.length !== 0) {
+          const account = accounts[0];
+          console.log("Found an authorized account:", account);
+          setCurrentAccount(account);
+          getAllRockets();
+        } else {
+          console.log("No authorized account found");
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
     checkIfWalletIsConnected();
   }, []);
 
@@ -167,40 +201,38 @@ function Home() {
   });
 
   useEffect(() => {
-    const getAllRockets = async () => {
-      try {
-        const { ethereum } = window;
-        if (ethereum) {
-          const provider = new ethers.providers.Web3Provider(ethereum);
-          const signer = provider.getSigner();
-          const rocketPortalContract = new ethers.Contract(
-            contractAddress,
-            contractABI,
-            signer
-          );
+    let rocketPortalContract;
 
-          const rockets = await rocketPortalContract.getAllRockets();
-
-          let rocketsCleaned = [];
-          rockets.forEach((rocket) => {
-            rocketsCleaned.push({
-              address: rocket.rocketer,
-              timestamp: new Date(rocket.timestamp * 1000),
-              message: rocket.message,
-            });
-          });
-
-          setAllRockets(rocketsCleaned);
-        } else {
-          console.log("Ethereum object doesn't exist!");
-        }
-      } catch (error) {
-        console.log(error);
-      }
+    const onNewRocket = (from, timestamp, message) => {
+      console.log("NewRocket", from, timestamp, message);
+      setAllRockets((prevState) => [
+        ...prevState,
+        {
+          address: from,
+          timestamp: new Date(timestamp * 1000),
+          message: message,
+        },
+      ]);
     };
 
-    getAllRockets();
-  }, [rocketCount]);
+    if (window.ethereum) {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+
+      rocketPortalContract = new ethers.Contract(
+        contractAddress,
+        contractABI,
+        signer
+      );
+      rocketPortalContract.on("NewRocket", onNewRocket);
+    }
+
+    return () => {
+      if (rocketPortalContract) {
+        rocketPortalContract.off("NewRocket", onNewRocket);
+      }
+    };
+  }, []);
 
   return (
     <Container>
