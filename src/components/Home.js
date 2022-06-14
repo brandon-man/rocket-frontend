@@ -276,7 +276,7 @@ function Home() {
               Connect Wallet
             </Button>
           ) : (
-            <Text p={4}>Number of rockets: {rocketCount}</Text>
+            <Text p={4}>Number of 🚀: {rocketCount}</Text>
           )}
         </Stack>
       </Flex>
